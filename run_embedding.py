@@ -24,8 +24,11 @@ if __name__ == "__main__":
     model = CLIPForFusion.from_pretrained(model_args.model_name_or_path)
 
     # frozen the clip model
-    for param in model.clip_model.parameters():
-        param.requires_grad = False
+    for param in model.clip_model.vision_model.parameters():
+        param.requires_grad = True
+
+    for param in model.clip_model.text_model.parameters():
+        param.requires_grad = True
 
     dataset = ShopeeDataset(data_args)
     collate_fn = get_collate_fn(processor)

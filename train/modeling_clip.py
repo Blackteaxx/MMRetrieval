@@ -58,6 +58,8 @@ class CLIPForFusion(nn.Module):
 
         self.fusion_fc = nn.Linear(self.fusion_dim * 2, self.fusion_dim)
 
+        self.projector = nn.Linear(self.fusion_dim, self.fusion_dim)
+
     @classmethod
     def from_pretrained(cls, model_name_or_path):
         clip_model = CLIPForEmbedding.from_pretrained(model_name_or_path)
@@ -83,6 +85,22 @@ class CLIPForFusion(nn.Module):
     def forward(self, inputs):
         embed = self.clip_model(inputs)
 
+        text_embs = embed["text"]
+        image_embs = embed["image"]
+
+        text_fusion = self.act_fn(self.text_fc(text_embs))
+        image_fusion = self.act_fn(self.image_fc(image_embs))
+
+        fusion = self.act_fn(
+            self.fusion_fc(torch.cat([text_fusion, image_fusion], dim=-1))
+        )
+
+        proj = self.act_fn(self.projector(fusion))
+
+        return proj
+
+    def encode(self, inputs):
+        embed = self.clip_model(inputs)
         text_embs = embed["text"]
         image_embs = embed["image"]
 

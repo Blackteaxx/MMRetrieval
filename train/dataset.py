@@ -130,6 +130,7 @@ class ShopeeDataset(Dataset):
             return {
                 "title": title,
                 "image": img,
+                "image_path": image_path,
             }
 
     def _get_image(self, path):

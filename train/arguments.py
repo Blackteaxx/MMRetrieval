@@ -18,4 +18,4 @@ class DataArguments:
 @dataclass
 class MMTrainArguments(TrainingArguments):
     temperature: float = 0.05
-    loss_type: str = "nce"
+    loss_type: str = "triplet"
