@@ -19,3 +19,4 @@ class DataArguments:
 class MMTrainArguments(TrainingArguments):
     temperature: float = 0.05
     loss_type: str = "triplet"
+    negatives_cross_batch: bool = False

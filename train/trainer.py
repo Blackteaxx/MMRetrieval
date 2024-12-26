@@ -2,6 +2,8 @@ import os
 from typing import Optional
 
 import torch
+import torch.distributed as dist
+
 from transformers import Trainer
 
 from .criterion import InfoNCELoss, TripletLogitsLoss
@@ -21,6 +23,12 @@ class MMTrainer(Trainer):
         query_embeddings = torch.nn.functional.normalize(query_embeddings, p=2, dim=-1)
         pos_embeddings = torch.nn.functional.normalize(pos_embeddings, p=2, dim=-1)
         neg_embeddings = torch.nn.functional.normalize(neg_embeddings, p=2, dim=-1)
+
+        if self.args.negatives_cross_batch:
+            # Gather all negative embeddings from all processes
+            neg_embeddings_all = [torch.zeros_like(neg_embeddings) for _ in range(dist.get_world_size())]
+            dist.all_gather(neg_embeddings_all, neg_embeddings)
+            neg_embeddings_all = torch.cat(neg_embeddings_all)
 
         if self.args.loss_type == "nce":
             criterion = InfoNCELoss(self.args)

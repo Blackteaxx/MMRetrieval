@@ -3,6 +3,9 @@ import os
 
 import pandas as pd
 from PIL import Image
+import cv2
+import albumentations
+from albumentations.pytorch.transforms import ToTensorV2
 from torch.utils.data import Dataset
 from torchvision import transforms
 from tqdm import tqdm
@@ -64,19 +67,52 @@ def get_collate_fn(processor):
     return collate_fn
 
 
+def get_train_transforms():
+    return albumentations.Compose(
+        [
+            albumentations.Resize(512, 512, always_apply=True),
+            albumentations.HorizontalFlip(p=0.5),
+            albumentations.VerticalFlip(p=0.5),
+            albumentations.Rotate(limit=120, p=0.8),
+            albumentations.RandomBrightnessContrast(
+                brightness_limit=(0.09, 0.6), p=0.5
+            ),
+            albumentations.Normalize(
+                mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
+            ),
+            ToTensorV2(p=1.0),
+        ]
+    )
+
+
+def get_valid_transforms():
+    return albumentations.Compose(
+        [
+            albumentations.Resize(512, 512, always_apply=True),
+            albumentations.Normalize(),
+            ToTensorV2(p=1.0),
+        ]
+    )
+
+
 class ShopeeDataset(Dataset):
     def __init__(self, args: DataArguments, split: str = "train"):
         self.args = args
         self.df = pd.read_json(args.data_dir, lines=True)
-        self.transform = transforms.Compose(
-            [
-                transforms.Resize(256),
-                transforms.CenterCrop(224),
-                # convert to RGB
-                transforms.Lambda(lambda img: img.convert("RGB")),
-                transforms.ToTensor(),
-            ]
+        # self.transform = transforms.Compose(
+        #     [
+        #         transforms.Resize(256),
+        #         transforms.CenterCrop(224),
+        #         # convert to RGB
+        #         transforms.Lambda(lambda img: img.convert("RGB")),
+        #         transforms.ToTensor(),
+        #     ]
+        # )
+
+        self.transform = (
+            get_train_transforms() if split == "train" else get_valid_transforms()
         )
+
         self.split = split
         self.len = len(self.df)
         # self.imgs = self._read_all_images()
@@ -100,10 +136,6 @@ class ShopeeDataset(Dataset):
             pos_img = self._get_image(pos_img_path)
             neg_img = self._get_image(neg_img_path)
 
-            # query_img = self.imgs[query_img_path]
-            # pos_img = self.imgs[pos_img_path]
-            # neg_img = self.imgs[neg_img_path]
-
             return {
                 "query": {
                     "text": query_text,
@@ -125,18 +157,17 @@ class ShopeeDataset(Dataset):
 
             img = self._get_image(image_path)
 
-            # img = self.imgs[image_path]
-
             return {
                 "title": title,
                 "image": img,
-                "image_path": image_path,
             }
 
     def _get_image(self, path):
-        img = Image.open(path)
-        img = self.transform(img)
-        return img
+        image = cv2.imread(path)
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        augmented = self.transform(image=image)
+        image = augmented["image"]
+        return image
 
     def _read_all_images(self):
         def load_image(idx):

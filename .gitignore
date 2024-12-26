@@ -175,3 +175,5 @@ FlagEmbedding/
 
 # models
 model/*
+*.pt
+*.pth
