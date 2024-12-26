@@ -10,7 +10,7 @@ deepspeed --include localhost:0,1 run_embedding.py \
     --deepspeed ds_zero2_no_offload.json \
     --learning_rate 2e-5 \
     --lr_scheduler_type cosine \
-    --warmup_ratio 0.1 \
+    --warmup_ratio 0.15 \
     --dataloader_num_workers 16 \
     --fp16 True \
     --num_train_epochs 15 \
