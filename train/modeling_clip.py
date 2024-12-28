@@ -48,8 +48,8 @@ class CLIPForFusion(nn.Module):
         self.clip_model = clip_model
         self.processor = processor
 
-        self.txt_hidden_dim = 768
-        self.img_hidden_dim = 768
+        self.txt_hidden_dim = clip_model.projection_dim
+        self.img_hidden_dim = clip_model.projection_dim
         self.fusion_dim = 512
 
         self.text_fc = nn.Linear(self.txt_hidden_dim, self.fusion_dim)

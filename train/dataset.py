@@ -1,13 +1,13 @@
 import concurrent.futures
 import os
 
-import pandas as pd
-from PIL import Image
-import cv2
 import albumentations
+import cv2
+import numpy as np
+import pandas as pd
 from albumentations.pytorch.transforms import ToTensorV2
+from PIL import Image
 from torch.utils.data import Dataset
-from torchvision import transforms
 from tqdm import tqdm
 
 from .arguments import DataArguments  # type: ignore
@@ -77,9 +77,6 @@ def get_train_transforms():
             albumentations.RandomBrightnessContrast(
                 brightness_limit=(0.09, 0.6), p=0.5
             ),
-            albumentations.Normalize(
-                mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
-            ),
             ToTensorV2(p=1.0),
         ]
     )
@@ -89,7 +86,6 @@ def get_valid_transforms():
     return albumentations.Compose(
         [
             albumentations.Resize(512, 512, always_apply=True),
-            albumentations.Normalize(),
             ToTensorV2(p=1.0),
         ]
     )
@@ -125,12 +121,16 @@ class ShopeeDataset(Dataset):
 
         if self.split == "train":
             query_text = row["query"]
-            pos_text = row["pos_txt"][0]
-            neg_text = row["neg_txt"][0]
+            
+            pos_idx = np.random.choice(len(row["pos_txt"]))
+            neg_idx = np.random.choice(len(row["neg_txt"]))
+            
+            pos_text = row["pos_txt"][pos_idx]
+            neg_text = row["neg_txt"][neg_idx]
 
             query_img_path = os.path.join(self.args.img_dir, row["image"])
-            pos_img_path = os.path.join(self.args.img_dir, row["pos_img"][0])
-            neg_img_path = os.path.join(self.args.img_dir, row["neg_img"][0])
+            pos_img_path = os.path.join(self.args.img_dir, row["pos_img"][pos_idx])
+            neg_img_path = os.path.join(self.args.img_dir, row["neg_img"][neg_idx])
 
             query_img = self._get_image(query_img_path)
             pos_img = self._get_image(pos_img_path)
