@@ -1,11 +1,10 @@
 import logging
 
-from transformers import CLIPProcessor, HfArgumentParser
-
 from train.arguments import DataArguments, MMTrainArguments, ModelArguments
 from train.dataset import ShopeeDataset, get_collate_fn
 from train.modeling_clip import CLIPForFusion
 from train.trainer import MMTrainer
+from transformers import CLIPProcessor, HfArgumentParser
 
 logging.basicConfig(
     level=logging.INFO,
@@ -23,12 +22,15 @@ if __name__ == "__main__":
     processor = CLIPProcessor.from_pretrained(model_args.model_name_or_path)
     model = CLIPForFusion.from_pretrained(model_args.model_name_or_path)
 
+    for param in model.parameters():
+        param.requires_grad = True
+
     # frozen the clip model
     for param in model.clip_model.vision_model.parameters():
         param.requires_grad = True
 
     for param in model.clip_model.text_model.parameters():
-        param.requires_grad = True
+        param.requires_grad = False
 
     dataset = ShopeeDataset(data_args)
     collate_fn = get_collate_fn(processor)

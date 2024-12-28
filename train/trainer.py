@@ -29,6 +29,9 @@ class MMTrainer(Trainer):
             neg_embeddings_all = [torch.zeros_like(neg_embeddings) for _ in range(dist.get_world_size())]
             dist.all_gather(neg_embeddings_all, neg_embeddings)
             neg_embeddings_all = torch.cat(neg_embeddings_all)
+            neg_embeddings = neg_embeddings_all
+
+        # print(f"neg_embeddings {neg_embeddings.shape}")
 
         if self.args.loss_type == "nce":
             criterion = InfoNCELoss(self.args)
