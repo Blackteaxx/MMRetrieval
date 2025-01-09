@@ -1,21 +1,29 @@
+import html
+import string
+from typing import List, Optional, Tuple, Union
+
+import ftfy
 import torch
 from open_clip import create_model
 from transformers import PretrainedConfig, PreTrainedModel
-from transformers.models.siglip.modeling_siglip import SiglipOutput
-from typing import Optional, Tuple, Union, List
 from transformers.feature_extraction_utils import BatchFeature
 from transformers.image_utils import ImageInput
+from transformers.models.siglip.modeling_siglip import SiglipOutput
 from transformers.processing_utils import ProcessorMixin
-from transformers.tokenization_utils_base import PaddingStrategy, PreTokenizedInput, TextInput, TruncationStrategy
+from transformers.tokenization_utils_base import (
+    PaddingStrategy,
+    PreTokenizedInput,
+    TextInput,
+    TruncationStrategy,
+)
 from transformers.utils import TensorType
-import string
-import ftfy
-import html
+
 
 def basic_clean(text):
     text = ftfy.fix_text(text)
     text = html.unescape(html.unescape(text))
     return text.strip()
+
 
 def canonicalize_text(
     text,
@@ -45,9 +53,11 @@ def canonicalize_text(
     text = " ".join(text.split())
     return text.strip()
 
+
 def _clean_canonicalize(x):
     # basic, remove whitespace, remove punctuation, lower case
     return canonicalize_text(basic_clean(x))
+
 
 class MarqoFashionSigLIPConfig(PretrainedConfig):
     def __init__(
@@ -57,7 +67,8 @@ class MarqoFashionSigLIPConfig(PretrainedConfig):
     ):
         super().__init__(**kwargs)
         self.open_clip_model_name = open_clip_model_name
-        
+
+
 class MarqoFashionSigLIPProcessor(ProcessorMixin):
     r"""
     Constructs a Siglip processor which wraps a Siglip image processor and a Siglip tokenizer into a single processor.
@@ -81,7 +92,9 @@ class MarqoFashionSigLIPProcessor(ProcessorMixin):
 
     def __call__(
         self,
-        text: Union[TextInput, PreTokenizedInput, List[TextInput], List[PreTokenizedInput]] = None,
+        text: Union[
+            TextInput, PreTokenizedInput, List[TextInput], List[PreTokenizedInput]
+        ] = None,
         images: ImageInput = None,
         padding: Union[bool, str, PaddingStrategy] = False,
         truncation: Union[bool, str, TruncationStrategy] = None,
@@ -135,19 +148,29 @@ class MarqoFashionSigLIPProcessor(ProcessorMixin):
         """
 
         if text is None and images is None:
-            raise ValueError("You have to specify either text or images. Both cannot be none.")
+            raise ValueError(
+                "You have to specify either text or images. Both cannot be none."
+            )
 
         if text is not None:
             if isinstance(text, str):
                 text = [text]
             text = [_clean_canonicalize(raw_text) for raw_text in text]
             encoding = self.tokenizer(
-                text, return_tensors=return_tensors, padding=padding, truncation=truncation, max_length=max_length
+                text,
+                return_tensors=return_tensors,
+                padding=padding,
+                truncation=truncation,
+                max_length=max_length,
             )
 
         if images is not None:
             try:
-                images = [image.convert('RGB') for image in images] if isinstance(images, list) else images.convert('RGB')
+                images = (
+                    [image.convert("RGB") for image in images]
+                    if isinstance(images, list)
+                    else images.convert("RGB")
+                )
             except:
                 images = images
             image_features = self.image_processor(images, return_tensors=return_tensors)
@@ -180,47 +203,46 @@ class MarqoFashionSigLIPProcessor(ProcessorMixin):
         tokenizer_input_names = self.tokenizer.model_input_names
         image_processor_input_names = self.image_processor.model_input_names
         return list(dict.fromkeys(tokenizer_input_names + image_processor_input_names))
-        
+
+
 class MarqoFashionSigLIP(PreTrainedModel):
     config_class = MarqoFashionSigLIPConfig
 
     def __init__(self, config: MarqoFashionSigLIPConfig):
         super().__init__(config)
         self.config = config
-        self.model = create_model(config.open_clip_model_name, output_dict=True)
+        self.model = create_model(
+            config.open_clip_model_name,
+            pretrained=None,
+            output_dict=True,
+            cache_dir="/data/model/Marqo",
+        )
         self.model.eval()
         self.model.to(self.device)
-        
+
     def get_image_features(
-        self, 
-        pixel_values: torch.FloatTensor, 
-        normalize: bool = False,
-        **kwargs
-        ) -> torch.FloatTensor:
-        
+        self, pixel_values: torch.FloatTensor, normalize: bool = False, **kwargs
+    ) -> torch.FloatTensor:
         with torch.inference_mode():
             image_features = self.model.encode_image(pixel_values, normalize=normalize)
         return image_features
-    
+
     def get_text_features(
-        self,
-        input_ids: torch.Tensor,
-        normalize: bool = False,
-        **kwargs
+        self, input_ids: torch.Tensor, normalize: bool = False, **kwargs
     ) -> torch.FloatTensor:
-        
         with torch.inference_mode():
             text_features = self.model.encode_text(input_ids, normalize=normalize)
         return text_features
-        
+
     def forward(
         self,
         input_ids: Optional[torch.LongTensor] = None,
         pixel_values: Optional[torch.FloatTensor] = None,
         return_dict: Optional[bool] = None,
     ) -> Union[Tuple, SiglipOutput]:
-
-        vision_outputs = self.get_image_features(pixel_values=pixel_values, normalize=True)
+        vision_outputs = self.get_image_features(
+            pixel_values=pixel_values, normalize=True
+        )
         text_outputs = self.get_text_features(input_ids=input_ids, normalize=True)
 
         logits_per_text = text_outputs @ vision_outputs.T
@@ -233,5 +255,5 @@ class MarqoFashionSigLIP(PreTrainedModel):
             logits_per_image=logits_per_image,
             logits_per_text=logits_per_text,
             text_embeds=text_outputs,
-            image_embeds=vision_outputs
+            image_embeds=vision_outputs,
         )

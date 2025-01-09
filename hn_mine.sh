@@ -8,7 +8,7 @@ script_path="FlagEmbedding/scripts/hn_mine.py"
 python $script_path \
     --input_file $input_file \
     --output_file $output_file \
-    --range_for_sampling 50-200 \
+    --range_for_sampling 10-50 \
     --negative_number 15 \
     --embedder_name_or_path $model_path \
     --embedder_model_class "encoder-only-base" \
