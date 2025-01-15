@@ -3,6 +3,14 @@ from PIL import Image
 
 
 def visualize(query_text, pred_texts, query_image_path, pred_image_paths):
+    """Visualize the query and predicted images and texts.
+
+    Args:
+        query_text (_type_): _description_
+        pred_texts (_type_): _description_
+        query_image_path (_type_): _description_
+        pred_image_paths (_type_): _description_
+    """
     query_image = Image.open(query_image_path)
     pred_images = [Image.open(pred) for pred in pred_image_paths]
 
