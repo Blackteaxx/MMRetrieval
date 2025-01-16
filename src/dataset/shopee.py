@@ -10,7 +10,7 @@ from PIL import Image
 from torch.utils.data import Dataset
 from tqdm import tqdm
 
-from .arguments import DataArguments  # type: ignore
+from ..arguments import DataArguments  # type: ignore
 
 
 def get_collate_fn(processor):

@@ -168,12 +168,22 @@ cache_data/*
 .vscode/*
 .vscode/
 
-# data文件夹除了sample文件夹下的文件，其他都不上传
+
+# Ignore all files in data directory except .ipynb and .md files
+data/
 data/*
-*.csv
+*.jpg
+!data/*.ipynb
+!data/*.md
 FlagEmbedding/
 
 # models
 model/*
 *.pt
 *.pth
+*.safetensor
+*.safetensors
+
+# embeddings
+embeddings/*
+!embeddings/*.md

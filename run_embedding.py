@@ -1,9 +1,9 @@
 import logging
 
-from train.arguments import DataArguments, MMTrainArguments, ModelArguments
-from train.dataset import ShopeeDataset, get_collate_fn
-from train.modeling_clip import CLIPForFusion
-from train.trainer import MMTrainer
+from src.arguments import DataArguments, MMTrainArguments, ModelArguments
+from src.dataset.shopee import ShopeeDataset, get_collate_fn
+from src.modeling.modeling_clip import CLIPForFusion
+from src.training.trainer import MMTrainer
 from transformers import CLIPProcessor, HfArgumentParser
 
 logging.basicConfig(

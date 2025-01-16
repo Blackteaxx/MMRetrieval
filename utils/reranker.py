@@ -1,3 +1,5 @@
+from typing import List
+
 import vllm
 from logits_processor_zoo.vllm import MultipleChoiceLogitsProcessor
 from PIL import Image
@@ -22,14 +24,25 @@ def get_system_prompt():
 class Reranker:
     def __init__(
         self,
-        model_path,
-        quantization="awq",
-        tensor_parallel_size=1,
-        max_model_len=5000,
-        enforce_eager=True,
-        limit_mm_per_prompt=2,
-        choices=["yes", "no"],
+        model_path: str,
+        quantization: str = "awq",
+        tensor_parallel_size: int = 1,
+        max_model_len: int = 5000,
+        enforce_eager: bool = True,
+        limit_mm_per_prompt: int = 2,
+        choices: List[str] = ["yes", "no"],
     ):
+        """初始化reranker模型
+
+        参数:
+            model_path (str): 模型路径
+            quantization (str, optional): 量化方法. 默认为 "awq".
+            tensor_parallel_size (int, optional): 张量并行大小. 默认为 1.
+            max_model_len (int, optional): 模型最大长度. 默认为 5000.
+            enforce_eager (bool, optional): 是否强制使用eager模式. 默认为 True.
+            limit_mm_per_prompt (int, optional): 每个提示的多模态限制. 默认为 2.
+            choices (List[str], optional): 用于logits限制的两个token，第一个元素代表是，第二个元素代表否. 默认为 ["yes", "no"].
+        """
         self.model_path = model_path
         self.tokenizer = AutoTokenizer.from_pretrained(model_path)
         self.processor = AutoProcessor.from_pretrained(model_path)
@@ -61,11 +74,11 @@ class Reranker:
 
     def rerank(
         self,
-        query_text,
-        pred_texts,
-        query_image_path,
-        pred_image_paths,
-        pred_ids,
+        query_text: str,
+        pred_texts: List[str],
+        query_image_path: str,
+        pred_image_paths: List[str],
+        pred_ids: List[int],
         use_tqdm=False,
     ):
         """Use multi-modal inputs to generate reranked results.

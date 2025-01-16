@@ -6,7 +6,7 @@ import torch.distributed as dist
 
 from transformers import Trainer
 
-from .criterion import InfoNCELoss, TripletLogitsLoss
+from ..criterion import InfoNCELoss, TripletLogitsLoss
 
 
 class MMTrainer(Trainer):

@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Optional
 
 from transformers import TrainingArguments
 
@@ -11,8 +12,10 @@ class ModelArguments:
 @dataclass
 class DataArguments:
     data_dir: str
-    img_dir: str
-    cache_dir: str
+    img_dir: Optional[str] = None
+    cache_dir: Optional[str] = None
+
+    read_mode: str = "all"  # Options are "text", "image", "all"
 
 
 @dataclass
