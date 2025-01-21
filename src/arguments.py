@@ -15,6 +15,8 @@ class DataArguments:
     img_dir: Optional[str] = None
     cache_dir: Optional[str] = None
 
+    size: int = 512
+
     read_mode: str = "all"  # Options are "text", "image", "all"
 
 

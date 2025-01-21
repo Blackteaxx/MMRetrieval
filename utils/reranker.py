@@ -8,15 +8,16 @@ from vllm import LLM
 
 
 def get_system_prompt():
-    system_prompt = """
-        You are a product expert. You will be given two product images and their descriptions.
-        You should consider the following rules carefully when comparing the products:
-        - **Brand** and **measurements**
-        - **Color**, **shape**, and visual features
-        - Any additional **details** from the descriptions
+    system_prompt = """You are a product expert. You will be given **two product images** along with their **text descriptions**. Your task is to determine whether they represent the **exact same-style product** according to the following criteria:
+	1.	They must be the **same product type** (e.g., both are running shoes, both are mobile phones, etc.).
+	2.	If **brand** or **model **information is provided, they must match exactly.
+	3.	The **color**, **shape**, and **visual design** must be the same or indistinguishable in the provided images.
+	4.	The **measurements** or **size** (if provided) must not conflict.
+	5.	Any other **key details** from the descriptions (e.g., material, functionality) should not conflict in a way that implies they are different products.
 
-        Decide if they represent the exact same-style product. 
-        Your answer must be a single word: "yes" for the same style, "no" for different styles.
+	If you determine they represent the **exact same-style** product, answer "yes". Otherwise, answer "no".
+    
+    You should consider the **text descriptions** and **images** together to make your decision. Carefully examine the images and text descriptions, and pay more attention to outputing "no" if you are not sure about the similarity.
     """
     return system_prompt
 
@@ -80,20 +81,20 @@ class Reranker:
         pred_image_paths: List[str],
         pred_ids: List[int],
         use_tqdm=False,
-    ):
+    ) -> List[int]:
         """Use multi-modal inputs to generate reranked results.
         Reference: https://docs.vllm.ai/en/latest/serving/multimodal_inputs.html
 
         Args:
-            query_text (_type_): _description_
-            preds_text (_type_): _description_
-            query_image_path (_type_): _description_
-            preds_image_path (_type_): _description_
-            preds_ids (_type_): _description
-            use_tqdm (_type_): _description
+            query_text (str): query文本输入
+            pred_texts (List[str]): 预测文本输入
+            query_image_path (str): query图片路径
+            pred_image_paths (List[str]): 预测图片路径
+            pred_ids (List[int]): 预测id
+            use_tqdm (bool, optional): _description_. Defaults to False.
 
         Returns:
-            _type_: _description_
+            List[int]: 重新排序的id
         """
 
         # text
@@ -152,11 +153,17 @@ class Reranker:
             {
                 "role": "user",
                 "content": [
-                    {"type": "text", "text": f"Product 1: {query_text}"},
+                    {
+                        "type": "text",
+                        "text": f"Product 1: \n title: {query_text} image: ",
+                    },
                     {
                         "type": "image",
                     },
-                    {"type": "text", "text": f"Product 2: {pred_text}"},
+                    {
+                        "type": "text",
+                        "text": f"Product 2: \n title: {pred_text}\n image: ",
+                    },
                     {
                         "type": "image",
                     },

@@ -170,7 +170,6 @@ cache_data/*
 
 
 # Ignore all files in data directory except .ipynb and .md files
-data/
 data/*
 *.jpg
 !data/*.ipynb

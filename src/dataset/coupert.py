@@ -13,7 +13,7 @@ from torch.utils.data import Dataset
 from ..arguments import DataArguments  # type: ignore
 
 
-def get_train_transforms():
+def get_train_transforms(size=512):
     return albumentations.Compose(
         [
             albumentations.Resize(512, 512, always_apply=True),
@@ -28,10 +28,10 @@ def get_train_transforms():
     )
 
 
-def get_valid_transforms():
+def get_valid_transforms(size=512):
     return albumentations.Compose(
         [
-            albumentations.Resize(512, 512, always_apply=True),
+            albumentations.Resize(size, size, always_apply=True),
             ToTensorV2(p=1.0),
         ]
     )
@@ -72,6 +72,7 @@ class CoupertDataset(Dataset):
         return len(self.data)
 
     def __getitem__(self, idx):
+        global_idx = idx
         row = self.data.iloc[idx]
 
         title = row["title"]
@@ -84,12 +85,14 @@ class CoupertDataset(Dataset):
             # image = cv2.imread(image_path)
             # image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
             # image = self.transforms(image=image)["image"]
-            image = self._read_image(image_path)
+            image = self._read_image(image_path, size=self.data_args.size)
         except OSError as e:
             logging.error(f"Error loading image: {image_path}")
             logging.error(e)
             # use a blank image
-            image = torch.zeros((3, 512, 512), dtype=torch.int8)
+            image = torch.zeros(
+                (3, self.data_args.size, self.data_args.size), dtype=torch.int8
+            )
 
         if self.data_args.read_mode == "image":
             return {"image": image}
@@ -97,12 +100,13 @@ class CoupertDataset(Dataset):
         return {
             "title": title,
             "image": image,
+            "global_idx": global_idx,
         }
 
-    def _read_image(self, image_path):
+    def _read_image(self, image_path, size=512):
         transforms = torchvision.transforms.Compose(
             [
-                torchvision.transforms.Resize((512, 512)),
+                torchvision.transforms.Resize((size, size)),
                 torchvision.transforms.Lambda(lambda img: img.convert("RGB")),
                 torchvision.transforms.ToTensor(),
             ]

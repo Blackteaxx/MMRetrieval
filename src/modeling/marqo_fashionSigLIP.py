@@ -211,12 +211,7 @@ class MarqoFashionSigLIP(PreTrainedModel):
     def __init__(self, config: MarqoFashionSigLIPConfig):
         super().__init__(config)
         self.config = config
-        self.model = create_model(
-            config.open_clip_model_name,
-            pretrained=None,
-            output_dict=True,
-            cache_dir="/data/model/Marqo",
-        )
+        self.model = create_model(config.open_clip_model_name, output_dict=True)
         self.model.eval()
         self.model.to(self.device)
 
@@ -257,3 +252,15 @@ class MarqoFashionSigLIP(PreTrainedModel):
             text_embeds=text_outputs,
             image_embeds=vision_outputs,
         )
+
+
+class MarqoFashionSigLIPForEmbedding(MarqoFashionSigLIP):
+    def forward(self, inputs):
+        pixel_values = inputs["pixel_values"]
+        input_ids = inputs["input_ids"]
+
+        image_features = self.get_image_features(pixel_values, normalize=True)
+        text_features = self.get_text_features(input_ids, normalize=True)
+
+        embeddings = torch.cat([image_features, text_features], dim=1)
+        return embeddings

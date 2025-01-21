@@ -68,8 +68,6 @@ def retrieval(
             gallery_start = j * gallery_chunk_size
             gallery_end = min((j + 1) * gallery_chunk_size, gallery_embs_pt.shape[0])
 
-            print(f"Start: {gallery_start}, End: {gallery_end}")
-            
             local_sim = (
                 torch.mm(
                     embs_pt[emb_start:emb_end],
