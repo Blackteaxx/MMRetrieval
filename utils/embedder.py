@@ -57,11 +57,17 @@ class Embedder:
 
     def _forward_clip(self, loader: DataLoader):
         embeddings = []
+        sample_ids = []
+
         for inputs in tqdm(loader):
             inputs = self._batch_to_device(inputs, self.device)
-            outputs = self.model(inputs).detach().cpu()
-            embeddings.append(outputs)
-        return torch.cat(embeddings)
+            outputs = self.model(inputs)
+            text_embs, image_embs = outputs["text"], outputs["image"]
+            embed = torch.cat([text_embs, image_embs], dim=-1).detach().cpu()
+            embed /= embed.norm(p=2, dim=-1, keepdim=True)
+            embeddings.append(embed)
+            sample_ids.append(inputs["global_indices"].detach().cpu())
+        return torch.cat(embeddings), torch.cat(sample_ids)
 
     def _forward_siglip(self, loader: DataLoader):
         embeddings = []

@@ -39,7 +39,14 @@ class CLIPForEmbedding(CLIPModel):
         text_embs = self.get_text_features(**text_inputs)
         image_embs = self.get_image_features(**image_inputs)
 
-        return {"text": text_embs, "image": image_embs}
+        # normalize
+        text_norm = text_embs.detach().norm(p=2, dim=-1, keepdim=True)
+        text_embs_normed = text_embs / text_norm
+
+        image_norm = image_embs.detach().norm(p=2, dim=-1, keepdim=True)
+        image_embs_normed = image_embs / image_norm
+
+        return {"text": text_embs_normed, "image": image_embs_normed}
 
 
 class CLIPForFusion(nn.Module):

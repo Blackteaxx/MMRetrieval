@@ -47,7 +47,7 @@ def retrieval(
     gallery_embs_pt = gallery_embs_pt / gallery_embs_pt.norm(p=2, dim=-1, keepdim=True)
 
     embs_pt = embs_pt.to(device)
-    gallery_embs_pt = gallery_embs_pt.to(device)
+    # gallery_embs_pt = gallery_embs_pt.to(device)
 
     num_chunks = (embs_pt.shape[0] + chunk_size - 1) // chunk_size
     num_gallery_chunks = (
@@ -71,7 +71,7 @@ def retrieval(
             local_sim = (
                 torch.mm(
                     embs_pt[emb_start:emb_end],
-                    gallery_embs_pt[gallery_start:gallery_end].T,
+                    gallery_embs_pt[gallery_start:gallery_end].T.to(device),
                 )
                 .detach()
                 .cpu()
