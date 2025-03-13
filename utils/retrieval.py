@@ -6,7 +6,7 @@ from tqdm import tqdm
 
 
 def retrieval(
-    embs: torch.Tensor,
+    query_embs: torch.Tensor,
     gallery_embs: torch.Tensor,
     gallery_ids: List[int],
     chunk_size: int = 512,
@@ -19,7 +19,7 @@ def retrieval(
     Use chunks to reduce memory usage.
 
     Args:
-        embs (torch.Tensor): query embeddings
+        query_embs (torch.Tensor): query embeddings
         gallery_embs (torch.Tensor): gallery embeddings
         gallery_ids (List[int]): gallery ids
         chunk_size (int, optional): chunk size of query. Defaults to 512.
@@ -39,7 +39,7 @@ def retrieval(
         "Only one of threshold or topK should be provided"
     )
 
-    embs_pt = embs
+    embs_pt = query_embs
     gallery_embs_pt = gallery_embs
 
     # norm
