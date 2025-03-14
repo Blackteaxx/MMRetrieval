@@ -1,4 +1,4 @@
-deepspeed --include localhost:1,2,3,4,5,6,7 run_embedding.py \
+deepspeed --include localhost:0,1 run_embedding.py \
     --output_dir modeloutput/1226/infonce/image \
     --model_name_or_path /data/model/laion/CLIP-ViT-L-14-laion2B-s32B-b82K \
     --data_dir data/train.json \
